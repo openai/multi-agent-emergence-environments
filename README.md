@@ -4,18 +4,18 @@
 Environment generation code for ***Emergent Tool Use From Multi-Agent Autocurricula***
 
 ### Installation
-This repository depends on the [mujoco-worldgen](https://github.com/openai/mujoco-worldgen) package. You will need to clone the mujoco-worldgen repository from, install its dependencies and then the repository itself before you can run mae-envs:
+This repository depends on the [mujoco-worldgen](https://github.com/openai/mujoco-worldgen) package. You will need to clone the mujoco-worldgen repository and install it and its dependencies:
 ```
 pip install -r mujoco-worldgen/requirements.txt
 pip install -e mujoco-worldgen/
 pip install -e multi-agent-emergence-environments/
 ```
 
-This repository has been used on Mac OS X and Ubuntu 16.04 with Python 3.6
+This repository has been tested only on Mac OS X and Ubuntu 16.04 with Python 3.6
 
 ### Use
 
-Environment construction works in the following way: You start from the `Base` environment (defined in `mae_envs/envs/base.py`) and then you add environment modules (e.g. `Boxes`, `Ramps`, `RandomWalls`, etc.) and wrappers on top. You can see examples in the `mae_envs/envs` folder.
+Environment construction works in the following way: You start from the `Base` environment (defined in `mae_envs/envs/base.py`) and then you add environment modules (e.g. `Boxes`, `Ramps`, `RandomWalls`, etc.) and then wrappers on top. You can see examples in the `mae_envs/envs` folder.
 
 If you want to construct a new environment, we highly recommend using the above paradigm in order to minimize code duplication. If you need new objects or game dynamics that don't already exist in this codebase, add them in via a new `EnvModule` class or a `gym.Wrapper` class rather than subclassing `Base` (or mujoco-worldgen's `Env` class)
 
@@ -25,4 +25,4 @@ The environments defined in this repository are: \
 *Blueprint Construction* - `mae_envs/envs/blueprint_construction.py` \
 *Shelter Construction* - `mae_envs/envs/shelter_construction.py`
 
-You can test out environments by using the `/bin/examine` script. Example usage: `bin/examine.py base`
+You can test out environments by using the `bin/examine` script. Example usage: `bin/examine.py base`
