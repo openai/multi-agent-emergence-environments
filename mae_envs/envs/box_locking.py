@@ -299,7 +299,7 @@ def make_env(n_substeps=15, horizon=80, deterministic_mode=False,
         env.add_module(LidarSites(n_agents=n_agents, n_lidar_per_agent=n_lidar_per_agent))
 
     if np.max(n_boxes) > 0 and grab_box:
-        env.add_module(AgentManipulation(manipulation_type='grab' if grab_box else 'pull'))
+        env.add_module(AgentManipulation())
     if box_floor_friction is not None:
         env.add_module(FloorAttributes(friction=box_floor_friction))
     env.add_module(WorldConstants(gravity=gravity))
