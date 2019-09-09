@@ -93,20 +93,6 @@ def close_to_other_object_placement(object_type, object_index, radius_key):
     return close_placement_fn
 
 
-def truncated_normal_placement(grid, obj_size, metadata, random_state, std=1/6, mean=1/2):
-    '''
-        Samples object position from a normal distribution. It the object was sampled outside of
-        the playing area, the position is resampled.
-    '''
-    grid_size = len(grid)
-    grid_std = grid_size * std
-    grid_mean = grid_size * mean
-    sample = np.array([np.inf, np.inf])
-    while np.any(sample > grid_size - 1) or np.any(sample < 1):
-        sample = np.round(random_state.normal(grid_mean, grid_std, (2,))).astype(np.int)
-    return sample
-
-
 def uniform_placement_middle(area_side_length_fraction):
     '''
         Creates a sampling function that samples object position uniformly within the

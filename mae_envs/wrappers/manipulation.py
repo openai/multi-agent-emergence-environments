@@ -159,16 +159,6 @@ class GrabObjWrapper(gym.Wrapper):
         return self.observation(obs), rew, done, info
 
 
-class OnlyHiderGrabWrapper(gym.ActionWrapper):
-    '''
-        Turn off grabbing (or pulling) for seekers in the hide and seek game.
-    '''
-    def action(self, action):
-        action = deepcopy(action)
-        action['action_pull'][self.unwrapped.n_hiders:] = 0
-        return action
-
-
 class GrabClosestWrapper(gym.ActionWrapper):
     '''
         Convert the action_pull (either grab or pull) to a binary action rather than having the

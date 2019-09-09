@@ -56,7 +56,6 @@ class Base(Env):
             obs.update(module.observation_step(self, self.sim))
         return obs
 
-    # Todo fast reset
     def _get_sim(self, seed):
         '''
             Calls build_world_step and then modify_sim_step for each module. If
@@ -90,6 +89,10 @@ class Base(Env):
 
 def make_env(n_substeps=5, horizon=250, deterministic_mode=False, n_agents=2,
              n_boxes=2, n_ramps=1):
+    '''
+        This make_env function is not used anywhere; it exists to provide a simple, bare-bones
+        example of how to construct a multi-agent environment using the modules framework.
+    '''
     env = Base(n_agents=n_agents, n_substeps=n_substeps, horizon=horizon,
                deterministic_mode=deterministic_mode)
     env.add_module(RandomWalls(grid_size=30, num_rooms=4, min_room_size=6, door_size=2))

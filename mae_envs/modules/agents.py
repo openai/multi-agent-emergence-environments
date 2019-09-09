@@ -5,7 +5,6 @@ from mujoco_worldgen.util.sim_funcs import (qpos_idxs_from_joint_prefix,
 from mujoco_worldgen.transforms import set_geom_attr_transform
 from mujoco_worldgen.util.rotation import normalize_angles
 from mae_envs.util.transforms import (add_weld_equality_constraint_transform,
-                                      add_distance_equality_constraint_transform,
                                       set_joint_damping_transform)
 from mae_envs.modules import EnvModule, rejection_placement, get_size_from_xml
 from mujoco_worldgen import ObjFromXML, Material
@@ -99,27 +98,17 @@ class Agents(EnvModule):
 
 class AgentManipulation(EnvModule):
     '''
-        Args:
-            manipulation_type (string): Options are
-                grab: the constraint created is a weld constraint which will maintain relative
-                    position and orientation between the two objects
-                pull: the constraint created is a distance constraint which will maintain
-                    relative distance but not orientation between the two objects
+        Adding this module is necessary for the grabbing dynamic implemented in GrabObjWrapper
+        (found in mae_envs/wrappers/manipulation.py) to work correctly.
     '''
     @store_args
-    def __init__(self, manipulation_type='grab'):
+    def __init__(self):
         pass
 
     def build_world_step(self, env, floor, floor_size):
         for i in range(env.n_agents):
-            if self.manipulation_type == 'grab':
-                floor.add_transform(add_weld_equality_constraint_transform(
-                    f'agent{i}:gripper', f'agent{i}:particle', 'floor0'))
-            elif self.manipulation_type == 'pull':
-                floor.add_transform(add_distance_equality_constraint_transform(
-                    f'agent{i}:gripper', f'agent{i}:agent', 'floor0'))
-            else:
-                raise NotImplementedError(f"{self.manipulation_type} manipulation type isn't implemented")
+            floor.add_transform(add_weld_equality_constraint_transform(
+                f'agent{i}:gripper', f'agent{i}:particle', 'floor0'))
         return True
 
     def modify_sim_step(self, env, sim):

@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def main(argv):
     '''
     examine.py is used to display environments
-    Argument to this program is matched against each of this options.
+
     For an example environment jsonnet, see
         mujoco-worldgen/examples/example_env_examine.jsonnet
     Example uses:

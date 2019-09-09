@@ -25,7 +25,8 @@ class SplitMultiAgentActions(gym.ActionWrapper):
 
 class SplitObservations(gym.ObservationWrapper):
     """
-        Split observations for each agent.
+        Split observations for each agent. All non-mask observations with names not in 'keys_self'
+        or 'keys_copy' are transposed so that their first dimension is n_agents.
         Args:
             keys_self: list of observation names which are agent specific. E.g. this will
                     permute qpos such that each agent sees its own qpos as the first numbers

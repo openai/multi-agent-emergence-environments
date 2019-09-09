@@ -50,56 +50,6 @@ class ConstructionDistancesWrapper(gym.ObservationWrapper):
         return obs
 
 
-class GatherRewardWrapper(gym.Wrapper):
-    '''
-        Adds a dense reward for gathering the boxes to a single location (site0)
-        Args:
-            reward_scale (float): scales the reward by this factor
-    '''
-    def __init__(self, env, reward_scale=1):
-        super().__init__(env)
-        self.reward_scale = reward_scale
-
-    def reset(self):
-        obs = self.env.reset()
-        self.current_goal_dist = obs['box_site_dist'][:, 0]
-        return obs
-
-    def step(self, action):
-        obs, rew, done, info = self.env.step(action)
-        goal_dist = obs['box_site_dist'][:, 0]
-        rew += np.sum(self.current_goal_dist - goal_dist) * self.reward_scale
-        self.current_goal_dist = goal_dist
-        return obs, rew, done, info
-
-
-class DisperseRewardWrapper(gym.Wrapper):
-    '''
-        Adds a dense reward for dispersing the boxes as far away from each other as possible.
-        Args:
-            reward_scale (float): scales the reward by this factor
-    '''
-    def __init__(self, env, reward_scale=1):
-        super().__init__(env)
-        self.reward_scale = reward_scale
-
-    def reset(self):
-        obs = self.env.reset()
-        I = np.eye(self.metadata['curr_n_boxes'].shape[0])
-        self.curr_box_dist_to_closest_box = (obs['box_box_dist'] + 1e9 * I).min(axis=-1)
-        return obs
-
-    def step(self, action):
-        obs, rew, done, info = self.env.step(action)
-        box_box_dist = obs['box_box_dist']
-        I = np.eye(self.metadata['curr_n_boxes'].shape[0])
-        box_dist_to_closest_box = (box_box_dist + 1e9 * I).min(axis=-1)
-        rew += np.sum(box_dist_to_closest_box) - np.sum(self.curr_box_dist_to_closest_box)
-        rew *= self.reward_scale
-        self.curr_box_dist_to_closest_box = box_dist_to_closest_box
-        return obs, rew, done, info
-
-
 class ConstructionDenseRewardWrapper(gym.Wrapper):
     '''
         Adds a dense reward for placing the boxes at the construction site locations.
@@ -289,8 +239,6 @@ def make_env(n_substeps=15, horizon=80, deterministic_mode=False,
     env = NumpyArrayRewardWrapper(env)
 
     reward_wrappers = {
-        'disperse': DisperseRewardWrapper,
-        'gather': GatherRewardWrapper,
         'construction_dense': ConstructionDenseRewardWrapper,
         'construction_completed': ConstructionCompletedRewardWrapper,
     }

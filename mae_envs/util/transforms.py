@@ -3,25 +3,6 @@ from collections import OrderedDict
 from mujoco_worldgen.transforms import closure_transform
 
 
-def add_distance_equality_constraint_transform(name, geom_name1, geom_name2):
-    '''
-        Creates a distance constraint that maintains a fixed distance between the two objects.
-    '''
-    def fun(xml_dict):
-        if 'equality' not in xml_dict:
-            xml_dict['equality'] = OrderedDict()
-            xml_dict['equality']['distance'] = []
-        constraint = OrderedDict()
-        constraint['@name'] = name
-        constraint['@geom1'] = geom_name1
-        constraint['@geom2'] = geom_name2
-        constraint['@active'] = False
-        xml_dict['equality']['distance'].append(constraint)
-        return xml_dict
-
-    return fun
-
-
 def add_weld_equality_constraint_transform(name, body_name1, body_name2):
     '''
         Creates a weld constraint that maintains relative position and orientation between

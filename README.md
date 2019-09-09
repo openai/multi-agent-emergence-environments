@@ -17,7 +17,7 @@ This repository has been tested only on Mac OS X and Ubuntu 16.04 with Python 3.
 
 Environment construction works in the following way: You start from the `Base` environment (defined in `mae_envs/envs/base.py`) and then you add environment modules (e.g. `Boxes`, `Ramps`, `RandomWalls`, etc.) and then wrappers on top. You can see examples in the `mae_envs/envs` folder.
 
-If you want to construct a new environment, we highly recommend using the above paradigm in order to minimize code duplication. If you need new objects or game dynamics that don't already exist in this codebase, add them in via a new `EnvModule` class or a `gym.Wrapper` class rather than subclassing `Base` (or mujoco-worldgen's `Env` class)
+If you want to construct a new environment, we highly recommend using the above paradigm in order to minimize code duplication. If you need new objects or game dynamics that don't already exist in this codebase, add them in via a new `EnvModule` class or a `gym.Wrapper` class rather than subclassing `Base` (or mujoco-worldgen's `Env` class). In general, `EnvModules` should be used for adding objects or sites to the environment, or otherwise modifying the mujoco simulator; wrappers should be used for everything else (e.g. adding rewards, additional observations, or implementing game mechanics like Lock and Grab).
 
 The environments defined in this repository are: \
 *Hide and seek* - `mae_envs/envs/hide_and_seek.py` - The Hide and Seek environment described in the paper. This encompasses the *random rooms*, *quadrant* and *food* versions of the game (you can switch between them by changing the arguments given to the `make_env` function in the file) \

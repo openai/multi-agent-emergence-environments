@@ -8,9 +8,8 @@ from mae_envs.wrappers.util import (DiscretizeActionWrapper, ConcatenateObsWrapp
                                     MaskActionWrapper, SpoofEntityWrapper,
                                     DiscardMujocoExceptionEpisodes,
                                     AddConstantObservationsWrapper)
-from mae_envs.wrappers.manipulation import (GrabObjWrapper, OnlyHiderGrabWrapper,
-                                            GrabClosestWrapper, LockObjWrapper,
-                                            LockAllWrapper)
+from mae_envs.wrappers.manipulation import (GrabObjWrapper, GrabClosestWrapper,
+                                            LockObjWrapper, LockAllWrapper)
 from mae_envs.wrappers.lidar import Lidar
 from mae_envs.wrappers.line_of_sight import (AgentAgentObsMask2D, AgentGeomObsMask2D,
                                              AgentSiteObsMask2D)
@@ -25,7 +24,7 @@ from mae_envs.modules.objects import Boxes, Ramps, LidarSites
 from mae_envs.modules.food import Food
 from mae_envs.modules.world import FloorAttributes, WorldConstants
 from mae_envs.modules.util import (uniform_placement, close_to_other_object_placement,
-                                   truncated_normal_placement, uniform_placement_middle)
+                                   uniform_placement_middle)
 
 
 class TrackStatWrapper(gym.Wrapper):
@@ -225,7 +224,7 @@ def make_env(n_substeps=15, horizon=80, deterministic_mode=False,
              box_size=0.5, boxid_obs=False, box_only_z_rot=True,
              rew_type='joint_zero_sum',
              lock_box=True, grab_box=True, lock_ramp=True,
-             symmetric_manipulation=True, lock_type='any_lock_specific',
+             lock_type='any_lock_specific',
              lock_grab_radius=0.25, lock_out_of_vision=True, grab_exclusive=False,
              grab_out_of_vision=False, grab_selective=False,
              box_floor_friction=0.2, other_friction=0.01, gravity=[0, 0, -50],
@@ -319,8 +318,6 @@ def make_env(n_substeps=15, horizon=80, deterministic_mode=False,
     if n_food > 0:
         if scenario == 'quadrant':
             first_food_placement = quadrant_placement
-        elif food_normal_centered:
-            first_food_placement = truncated_normal_placement
         elif food_box_centered:
             first_food_placement = uniform_placement_middle(0.25)
         else:
@@ -384,11 +381,8 @@ def make_env(n_substeps=15, horizon=80, deterministic_mode=False,
         keys_external += ['mask_af_obs', 'food_obs']
         keys_mask_external.append('mask_af_obs')
     if lock_box and np.max(n_boxes) > 0:
-        agent_idx_allowed_to_lock = (np.arange(n_hiders+n_seekers)
-                                     if symmetric_manipulation
-                                     else np.arange(n_hiders))
         env = LockObjWrapper(env, body_names=[f'moveable_box{i}' for i in range(np.max(n_boxes))],
-                             agent_idx_allowed_to_lock=agent_idx_allowed_to_lock,
+                             agent_idx_allowed_to_lock=np.arange(n_hiders+n_seekers),
                              lock_type=lock_type, radius_multiplier=lock_radius_multiplier,
                              obj_in_game_metadata_keys=["curr_n_boxes"],
                              agent_allowed_to_lock_keys=None if lock_out_of_vision else ["mask_ab_obs"])
@@ -396,11 +390,8 @@ def make_env(n_substeps=15, horizon=80, deterministic_mode=False,
         env = AgentGeomObsMask2D(env, pos_obs_key='ramp_pos', mask_obs_key='mask_ar_obs',
                                  geom_idxs_obs_key='ramp_geom_idxs')
         if lock_ramp:
-            agent_idx_allowed_to_lock = (np.arange(n_hiders+n_seekers)
-                                         if symmetric_manipulation
-                                         else np.arange(n_hiders, n_hiders + n_seekers))
             env = LockObjWrapper(env, body_names=[f'ramp{i}:ramp' for i in range(n_ramps)],
-                                 agent_idx_allowed_to_lock=agent_idx_allowed_to_lock,
+                                 agent_idx_allowed_to_lock=np.arange(n_hiders+n_seekers),
                                  lock_type=lock_type, ac_obs_prefix='ramp_',
                                  radius_multiplier=lock_radius_multiplier,
                                  obj_in_game_metadata_keys=['curr_n_ramps'],
@@ -412,8 +403,6 @@ def make_env(n_substeps=15, horizon=80, deterministic_mode=False,
                              radius_multiplier=grab_radius_multiplier,
                              grab_exclusive=grab_exclusive,
                              obj_in_game_metadata_keys=['curr_n_boxes', 'curr_n_ramps'])
-        if not symmetric_manipulation and n_ramps == 0:
-            env = OnlyHiderGrabWrapper(env)
 
     if n_lidar_per_agent > 0:
         env = Lidar(env, n_lidar_per_agent=n_lidar_per_agent, visualize_lidar=visualize_lidar,
