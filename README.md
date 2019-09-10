@@ -25,4 +25,11 @@ The environments defined in this repository are: \
 *Blueprint Construction* - `mae_envs/envs/blueprint_construction.py` \
 *Shelter Construction* - `mae_envs/envs/shelter_construction.py`
 
-You can test out environments by using the `bin/examine` script. Example usage: `bin/examine.py base`
+You can test out environments by using the `bin/examine` script. Example usage: `bin/examine.py base`. \
+You can also use `bin/examine` to play a saved policy on an environment. There are several environment jsonnets and policies in the `examples` folder. Example usage:
+
+```bin/examine.py examples/hide_and_seek_quadrant.jsonnet examples/hide_and_seek_quadrant.npz``` 
+
+Note that to be able to play saved policies, you will need to install a few additional packages. You can do this via
+
+`pip install -r multi-agent-emergence-environments/requirements_ma_policy.txt`

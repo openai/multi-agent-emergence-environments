@@ -5,9 +5,8 @@ import numpy as np
 from os.path import abspath, dirname, join
 from gym.spaces import Tuple
 
-from mae_envs.viewer import EnvViewer, PolicyViewer
+from mae_envs.viewer.env_viewer import EnvViewer
 from mae_envs.wrappers.multi_agent import JoinMultiAgentActions
-from ma_policy.load_policy import load_policy
 from mujoco_worldgen.util.envs import examine_env, load_env
 from mujoco_worldgen.util.types import extract_matching_arguments
 from mujoco_worldgen.util.parse_arguments import parse_arguments
@@ -48,6 +47,11 @@ def main(argv):
                     env_viewer=EnvViewer)
 
     if len(names) >= 2:  # run policies on the environment
+        # importing PolicyViewer and load_policy here because they depend on several
+        # packages which are only needed for playing policies, not for any of the
+        # environments code.
+        from mae_envs.viewer.policy_viewer import PolicyViewer
+        from ma_policy.load_policy import load_policy
         policy_names = names[1:]
         env, args_remaining_env = load_env(env_name, core_dir=core_dir,
                                            envs_dir=envs_dir, xmls_dir=xmls_dir,
