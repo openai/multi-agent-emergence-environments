@@ -23,6 +23,19 @@ class SplitMultiAgentActions(gym.ActionWrapper):
         return action['action_movement'].flatten()
 
 
+class JoinMultiAgentActions(gym.ActionWrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        self.n_agents = self.metadata['n_actors']
+        low = np.concatenate([space.low for space in self.action_space.spaces])
+        high = np.concatenate([space.high for space in self.action_space.spaces])
+        self.action_space = Box(low=low, high=high, dtype=self.action_space.spaces[0].dtype)
+
+    def action(self, action):
+        # action should be a tuple of different agent actions
+        return np.split(action, self.n_agents)
+
+
 class SplitObservations(gym.ObservationWrapper):
     """
         Split observations for each agent. All non-mask observations with names not in 'keys_self'
