@@ -113,9 +113,7 @@ class MAPolicy(object):
         # Value network
         (vpred,
          vpred_state_out,
-         vpred_training_stats,
-         vpred_reset_ops,
-         vpred_losses) = construct_tf_graph(
+         vpred_reset_ops) = construct_tf_graph(
             processed_inp, self.v_network_spec, scope='vpred_net', act=self.build_act)
 
         self._init_vpred_head(vpred, processed_inp, 'vpred_out0', "value0")
@@ -123,19 +121,12 @@ class MAPolicy(object):
         # Policy network
         (pi,
          pi_state_out,
-         policy_training_stats,
-         pi_reset_ops,
-         pi_losses) = construct_tf_graph(
+         pi_reset_ops) = construct_tf_graph(
             processed_inp, self.network_spec, scope='policy_net', act=self.build_act)
-        self.training_stats += policy_training_stats + vpred_training_stats
 
         self.state_out.update(vpred_state_out)
         self.state_out.update(pi_state_out)
         self._reset_ops += vpred_reset_ops + pi_reset_ops
-        for k, v in vpred_losses.items():
-            self.add_auxiliary_loss(k, v)
-        for k, v in pi_losses.items():
-            self.add_auxiliary_loss(k, v)
         self._init_policy_out(pi, taken_actions)
         if self.weight_decay != 0.0:
             kernels = [var for var in self.get_trainable_variables() if 'kernel' in var.name]
@@ -288,7 +279,6 @@ class MAPolicy(object):
         outputs = {
             'ac': self.sampled_action,
             'ac_logp': self.sampled_action_logp,
-            # 'vpred': self.supervised_heads['value0'].scaled_prediction_tensor,
             'vpred': self.scaled_value_tensor,
             'state': self.state_out}
         # Add timestep dimension to observations

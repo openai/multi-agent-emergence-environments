@@ -1,6 +1,5 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.contrib.distributions import RelaxedOneHotCategorical, OneHotCategorical
 from ma_policy.util import shape_list
 
 
@@ -60,7 +59,7 @@ def entity_concat(inps):
 def concat_entity_masks(inps, masks):
     '''
         Concats masks together. If mask is None, then it creates
-            a tensor of 1's with shape (BS, T, NE). 
+            a tensor of 1's with shape (BS, T, NE).
         Args:
             inps (list of tensors): tensors that masks apply to
             masks (list of tensors): corresponding masks
@@ -91,8 +90,7 @@ def residual_sa_block(inp, mask, heads, n_embd,
                       layer_norm=False, post_sa_layer_norm=False,
                       n_mlp=1, qk_w=0.125, v_w=0.125, post_w=0.125,
                       mlp_w1=0.125, mlp_w2=0.125,
-                      scope="residual_sa_block", reuse=False,
-                      training_stat_prefix="sa"):
+                      scope="residual_sa_block", reuse=False):
     '''
         Residual self attention block for entities.
         Notation:
@@ -110,11 +108,10 @@ def residual_sa_block(inp, mask, heads, n_embd,
                 post self attention, second mlp, and third mlp, respectively. Std will be sqrt(scale/n_embd)
             scope (string) -- tf scope
             reuse (bool) -- tf reuse
-            training_stat_prefix (string) -- Prefix for logged stats around self attention
     '''
     with tf.variable_scope(scope, reuse=reuse):
-        a, ts = self_attention(inp, mask, heads, n_embd, layer_norm=layer_norm, qk_w=qk_w, v_w=v_w,
-                               scope='self_attention', reuse=reuse, training_stat_prefix=training_stat_prefix)
+        a = self_attention(inp, mask, heads, n_embd, layer_norm=layer_norm, qk_w=qk_w, v_w=v_w,
+                           scope='self_attention', reuse=reuse)
         post_scale = np.sqrt(post_w / n_embd)
         post_a_mlp = tf.layers.dense(a,
                                      n_embd,
@@ -139,11 +136,11 @@ def residual_sa_block(inp, mask, heads, n_embd,
                                   name="mlp3")
         if n_mlp > 1:
             x = x + mlp
-        return x, ts
+        return x
 
 
 def self_attention(inp, mask, heads, n_embd, layer_norm=False, qk_w=1.0, v_w=0.01,
-                   scope='', reuse=False, training_stat_prefix="sa"):
+                   scope='', reuse=False):
     '''
         Self attention over entities.
         Notation:
@@ -160,7 +157,6 @@ def self_attention(inp, mask, heads, n_embd, layer_norm=False, qk_w=1.0, v_w=0.0
                 Std will be sqrt(scale/n_embd)
             scope (string) -- tf scope
             reuse (bool) -- tf reuse
-            training_stat_prefix (string) -- Prefix for logged stats around self attention
     '''
     with tf.variable_scope(scope, reuse=reuse):
         bs, T, NE, features = shape_list(inp)
@@ -183,43 +179,7 @@ def self_attention(inp, mask, heads, n_embd, layer_norm=False, qk_w=1.0, v_w=0.0
             n_output_entities = shape_list(out)[2]
             out = tf.reshape(out, (bs, T, n_output_entities, n_embd))  # (bs, T, n_output_entities, n_embd)
 
-        training_stats = attention_training_stats(softmax, mask, entity_mask, training_stat_prefix)
-
-        return out, training_stats
-
-
-def attention_training_stats(attention, logit_mask, entity_mask, name):
-    '''
-        Return a list of training stats around attention.
-        For each head, record the KL from uniform distribution and a sample histogram.
-        Args:
-            attention (BS, T, heads, NE, NE)
-            logit_mask (BS, T, 1, NE)
-            entity_mask (BS, T, NE)
-    '''
-    training_stats = []
-
-    bs, T, heads, NE, _ = shape_list(attention)
-    if logit_mask is not None:
-        logit_mask = tf.expand_dims(logit_mask, 2) # Add head dimension to logits
-        entity_mask = tf.expand_dims(entity_mask, 2) # Add head dimension to logits
-    else:
-        logit_mask = tf.ones_like(attention)
-        entity_mask = logit_mask[..., 0]
-    # KL from uniform distribution
-    q = tf.ones_like(attention) * logit_mask / (tf.reduce_sum(logit_mask, axis=-1, keepdims=True) + 1e-10)
-    log_q_over_p = tf.log((q + 1e-10) / (attention + 1e-10))
-    kl_per_entity = tf.reduce_sum(- attention * log_q_over_p, axis=-1) # (BS, T, heads, NE)
-    kl = tf.reduce_sum(kl_per_entity * entity_mask, axis=-1) / tf.reduce_sum(entity_mask, axis=-1)
-
-    def dummy_callback(**kwargs):
-        pass
-
-    for head in range(heads):
-        training_stats.append((f"{name}/{head}-kl".format(name), "scalar", tf.reduce_mean(kl[:, :, head]), dummy_callback))
-    training_stats.append((f"{name}/kl".format(name), "scalar", tf.reduce_mean(kl), dummy_callback))
-
-    return training_stats
+        return out
 
 
 def stable_masked_softmax(logits, mask):
@@ -323,6 +283,7 @@ def circ_conv1d(inp, **conv_kwargs):
 # Misc ###########
 ##################
 
+
 def layernorm(x, scope, epsilon=1e-5, reuse=False):
     '''
         normalize state vector to be zero mean / unit variance + learned scale/shift
@@ -335,4 +296,3 @@ def layernorm(x, scope, epsilon=1e-5, reuse=False):
         variance = tf.reduce_mean(tf.square(x - mean), axis=[-1], keep_dims=True)
         norm_x = (x - mean) * tf.rsqrt(variance + epsilon)
         return norm_x * gain + bias
-

@@ -7,7 +7,7 @@ from mujoco_worldgen.util.rotation import normalize_angles
 from mae_envs.util.transforms import (add_weld_equality_constraint_transform,
                                       set_joint_damping_transform)
 from mae_envs.modules import EnvModule, rejection_placement, get_size_from_xml
-from mujoco_worldgen import ObjFromXML, Material
+from mujoco_worldgen import ObjFromXML
 
 
 class Agents(EnvModule):
@@ -38,8 +38,6 @@ class Agents(EnvModule):
 
         for i in range(self.n_agents):
             obj = ObjFromXML("particle_hinge", name=f"agent{i}")
-            char = chr(ord('A') + i % 26)
-            obj.set_material(Material(texture="chars/" + char + ".png"))
             if self.friction is not None:
                 obj.add_transform(set_geom_attr_transform('friction', self.friction))
             if self.color is not None:
@@ -98,7 +96,7 @@ class Agents(EnvModule):
 
 class AgentManipulation(EnvModule):
     '''
-        Adding this module is necessary for the grabbing dynamic implemented in GrabObjWrapper
+        Adding this module is necessary for the grabbing mechanic implemented in GrabObjWrapper
         (found in mae_envs/wrappers/manipulation.py) to work correctly.
     '''
     @store_args

@@ -67,7 +67,7 @@ def construct_tf_graph(all_inputs, spec, act, scope='', reuse=False,):
                 ...
             }
             Entity Pooling --
-            Average pooling along entity dimension (second to last)
+            Pooling along entity dimension (second to last)
             {
                 'layer_type': 'entity_pooling'
                 'nodes_in': ['node_one', 'node_two']
@@ -87,6 +87,8 @@ def construct_tf_graph(all_inputs, spec, act, scope='', reuse=False,):
             {
                 'layer_type': 'flatten_outer',
             }
+            Layernorm --
+
     '''
     # Make a new dict to not overwrite input
     inp = {k: v for k, v in all_inputs.items()}
@@ -96,9 +98,7 @@ def construct_tf_graph(all_inputs, spec, act, scope='', reuse=False,):
     state_variables = OrderedDict()
     logger.info(f"Spec:\n{spec}")
     entity_locations = {}
-    training_stats = []
     reset_ops = []
-    losses = {}
     with tf.variable_scope(scope, reuse=reuse):
         for i, layer in enumerate(spec):
             try:
@@ -132,11 +132,6 @@ def construct_tf_graph(all_inputs, spec, act, scope='', reuse=False,):
                                                                              initial_state=initial_state)
                             state_variables[scope + f'_lstm{i}_state_c'] = state_out.c
                             state_variables[scope + f'_lstm{i}_state_h'] = state_out.h
-                    elif layer_type == 'sum':
-                        assert len(nodes_out) == 1, "Sum op must have only one node out"
-                        layer_name = layer.pop('layer_name', f'sum{i}')
-                        with tf.variable_scope(layer_name):
-                            inp[nodes_out[0]] = sum([inp[node_in] for node_in in nodes_in])
                     elif layer_type == 'concat':
                         layer_name = layer.pop('layer_name', f'concat{i}')
                         with tf.variable_scope(layer_name):
@@ -171,11 +166,6 @@ def construct_tf_graph(all_inputs, spec, act, scope='', reuse=False,):
                                 _ent_locs[node_in] = slice(loc, loc + n_ent)
                                 loc += n_ent
                             entity_locations[nodes_out[0]] = _ent_locs
-                    elif layer_type == 'extract_entity':
-                        layer_name = layer.pop('layer_name', f'extract_entity{i}')
-                        with tf.variable_scope(layer_name):
-                            ent_loc = entity_locations[layer['entity_location_key']][layer['entity_name']]
-                            inp[nodes_out[0]] = inp[nodes_in[0]][:, :, ent_loc]
                     elif layer_type == 'residual_sa_block':
                         layer_name = layer.pop('layer_name', f'self-attention{i}')
                         with tf.variable_scope(layer_name):
@@ -184,11 +174,9 @@ def construct_tf_graph(all_inputs, spec, act, scope='', reuse=False,):
 
                             mask = inp[layer.pop('mask')] if 'mask' in layer else None
                             internal_layer_name = layer.pop('internal_layer_name', f'residual_sa_block{i}')
-                            inp[nodes_out[0]], ts = residual_sa_block(sa_inp, mask, **layer,
-                                                                      scope=internal_layer_name,
-                                                                      reuse=reuse,
-                                                                      training_stat_prefix=f'sa{i}')
-                            training_stats += ts
+                            inp[nodes_out[0]] = residual_sa_block(sa_inp, mask, **layer,
+                                                                  scope=internal_layer_name,
+                                                                  reuse=reuse)
                     elif layer_type == 'entity_pooling':
                         pool_type = layer.get('type', 'avg_pooling')
                         assert pool_type in ['avg_pooling', 'max_pooling'], f"Pooling type {pool_type} \
@@ -233,7 +221,7 @@ def construct_tf_graph(all_inputs, spec, act, scope='', reuse=False,):
                 print(f"Error in {layer_type} layer: \n{layer}\nNodes in: {nodes_in}, Nodes out: {nodes_out}")
                 sys.exit()
 
-    return inp, state_variables, training_stats, reset_ops, losses
+    return inp, state_variables, reset_ops
 
 
 def construct_schemas_zero_state(spec, ob_space, scope=''):
