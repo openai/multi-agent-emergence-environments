@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def construct_tf_graph(all_inputs, spec, act, scope='', reuse=False,):
     '''
-        Construct tensorflow graph from spec. See mas/ppo/base-architectures.jsonnet for examples.
+        Construct tensorflow graph from spec.
         Args:
             main_inp (tf) -- input activations
             other_inp (dict of tf) -- other input activations such as state
