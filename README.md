@@ -1,7 +1,7 @@
 **Status:** Archive (code is provided as-is, no updates expected)
 
 # Multiagent emergence environments
-Environment generation code for ***Emergent Tool Use From Multi-Agent Autocurricula***
+Environment generation code for [Emergent Tool Use From Multi-Agent Autocurricula](https://arxiv.org/abs/1909.07528) ([blog](https://openai.com/blog/emergent-tool-use/))
 
 ### Installation
 This repository depends on the [mujoco-worldgen](https://github.com/openai/mujoco-worldgen) package. You will need to clone the mujoco-worldgen repository and install it and its dependencies:
