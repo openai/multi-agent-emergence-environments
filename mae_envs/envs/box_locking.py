@@ -396,8 +396,6 @@ def make_env(n_substeps=15, horizon=80, deterministic_mode=False,
                                       'ramp_obs': ['ramp_obs', 'ramp_you_lock', 'ramp_team_lock',
                                                    'ramp_obj_lock']})
     env = SelectKeysWrapper(env, keys_self=keys_self,
-                            keys_external=keys_external,
-                            keys_mask=keys_mask_self + keys_mask_external,
-                            flatten=False)
+                            keys_other=keys_external + keys_mask_self + keys_mask_external)
 
     return env

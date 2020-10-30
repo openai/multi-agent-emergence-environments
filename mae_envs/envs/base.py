@@ -18,7 +18,8 @@ class Base(Env):
             n_substeps (int): Number of internal mujoco steps per outer environment step;
                 essentially this is action repeat.
             n_agents (int): number of agents in the environment
-            floor_size (float): size of the floor
+            floor_size (float or (float, float)): size of the floor. If a list of 2 floats, the floorsize
+                will be randomized between them on each episode
             grid_size (int): size of the grid that we'll use to place objects on the floor
             action_lims (float tuple): lower and upper limit of mujoco actions
             deterministic_mode (bool): if True, seeds are incremented rather than randomly sampled.
@@ -37,7 +38,10 @@ class Base(Env):
         self.metadata['n_actors'] = n_agents
         self.horizon = horizon
         self.n_substeps = n_substeps
-        self.floor_size = floor_size
+        if not isinstance(floor_size, (tuple, list, np.ndarray)):
+            self.floor_size_dist = [floor_size, floor_size]
+        else:
+            self.floor_size_dist = floor_size
         self.grid_size = grid_size
         self.kwargs = kwargs
         self.placement_grid = np.zeros((grid_size, grid_size))
@@ -61,6 +65,8 @@ class Base(Env):
             Calls build_world_step and then modify_sim_step for each module. If
             a build_world_step failed, then restarts.
         '''
+        self.floor_size = np.random.uniform(self.floor_size_dist[0], self.floor_size_dist[1])
+        self.metadata['floor_size'] = self.floor_size
         world_params = WorldParams(size=(self.floor_size, self.floor_size, 2.5),
                                    num_substeps=self.n_substeps)
         successful_placement = False
@@ -111,8 +117,6 @@ def make_env(n_substeps=5, horizon=250, deterministic_mode=False, n_agents=2,
     env = AgentAgentObsMask2D(env)
     env = SplitObservations(env, keys_self + keys_mask_self)
     env = SelectKeysWrapper(env, keys_self=keys_self,
-                            keys_external=keys_external,
-                            keys_mask=keys_mask_self + keys_mask_external,
-                            flatten=False)
+                            keys_other=keys_external + keys_mask_self + keys_mask_external)
     env = DiscardMujocoExceptionEpisodes(env)
     return env
