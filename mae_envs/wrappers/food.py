@@ -1,6 +1,7 @@
 import gym
 import numpy as np
 from mae_envs.wrappers.util import update_obs_space
+from mujoco_worldgen.util.types import store_args
 from gym.spaces import Tuple, MultiDiscrete
 
 
@@ -24,19 +25,15 @@ class FoodHealthWrapper(gym.Wrapper):
             reward_scale_obs (bool): If true, adds the reward scale for the current
                 episode to food_obs
     '''
+    @store_args
     def __init__(self, env, eat_thresh=0.5, max_food_health=10, respawn_time=np.inf,
-                 food_rew_type='selfish', reward_scale=1.0, reward_scale_obs=False):
+                 food_rew_type='selfish', reward_scale=1.0, reward_scale_obs=False,
+                 split_eat_between_agents=False):
         super().__init__(env)
-        self.eat_thresh = eat_thresh
-        self.max_food_health = max_food_health
-        self.respawn_time = respawn_time
-        self.food_rew_type = food_rew_type
         self.n_agents = self.metadata['n_agents']
 
         if type(reward_scale) not in [list, tuple, np.ndarray]:
-            reward_scale = [reward_scale, reward_scale]
-        self.reward_scale = reward_scale
-        self.reward_scale_obs = reward_scale_obs
+            self.reward_scale = [reward_scale, reward_scale]
 
         # Reset obs/action space to match
         self.max_n_food = self.metadata['max_n_food']
@@ -88,6 +85,9 @@ class FoodHealthWrapper(gym.Wrapper):
             dist_to_food = np.linalg.norm(obs['agent_pos'][:, None] - obs['food_pos'][None], axis=-1)
             eat = np.logical_and(dist_to_food < self.eat_thresh, self.food_healths.T > 0)
             eat = np.logical_and(eat, action_eat_food).astype(np.float32)
+            if self.split_eat_between_agents:
+                eat_per_food = np.sum(eat, 0)
+                eat[:, eat_per_food > 0] /= eat_per_food[eat_per_food > 0]
             eat_per_food = np.sum(eat, 0)
 
             # Make sure that all agents can't have the last bite of food.
@@ -126,6 +126,7 @@ class FoodHealthWrapper(gym.Wrapper):
         else:
             food_rew = 0.0
 
+        info['agents_eat'] = eat
         rew += food_rew * self.curr_reward_scale
         return self.observation(obs), rew, done, info
 

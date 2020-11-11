@@ -258,7 +258,7 @@ def make_env(n_substeps=15, horizon=80, deterministic_mode=False,
             prob_outside_walls=prob_outside_walls, gen_door_obs=False))
         box_placement_fn = uniform_placement
         ramp_placement_fn = uniform_placement
-        cell_size = env.floor_size / grid_size
+        cell_size = floor_size / grid_size
 
         first_hider_placement = uniform_placement
         if hiders_together_radius is not None:
@@ -323,7 +323,7 @@ def make_env(n_substeps=15, horizon=80, deterministic_mode=False,
         else:
             first_food_placement = uniform_placement
         if food_together_radius is not None:
-            cell_size = env.floor_size / grid_size
+            cell_size = floor_size / grid_size
             ftr_in_cells = np.ceil(food_together_radius / cell_size).astype(int)
 
             env.metadata['food_together_radius'] = ftr_in_cells
@@ -412,7 +412,7 @@ def make_env(n_substeps=15, horizon=80, deterministic_mode=False,
 
     if prep_obs:
         env = TrackStatWrapper(env, np.max(n_boxes), n_ramps, n_food)
-    env = SplitObservations(env, keys_self + keys_mask_self, keys_copy=keys_copy)
+    env = SplitObservations(env, keys_self + keys_mask_self, keys_copy=keys_copy, keys_self_matrices=keys_mask_self)
     env = SpoofEntityWrapper(env, np.max(n_boxes), ['box_obs', 'you_lock', 'team_lock', 'obj_lock'], ['mask_ab_obs'])
     if n_food:
         env = SpoofEntityWrapper(env, n_food, ['food_obs'], ['mask_af_obs'])
@@ -431,7 +431,5 @@ def make_env(n_substeps=15, horizon=80, deterministic_mode=False,
                                       'box_obs': ['box_obs', 'you_lock', 'team_lock', 'obj_lock'],
                                       'ramp_obs': ['ramp_obs'] + (['ramp_you_lock', 'ramp_team_lock', 'ramp_obj_lock'] if lock_ramp else [])})
     env = SelectKeysWrapper(env, keys_self=keys_self,
-                            keys_external=keys_external,
-                            keys_mask=keys_mask_self + keys_mask_external,
-                            flatten=False)
+                            keys_other=keys_external + keys_mask_self + keys_mask_external)
     return env

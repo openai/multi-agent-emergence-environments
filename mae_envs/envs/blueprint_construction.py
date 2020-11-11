@@ -265,7 +265,5 @@ def make_env(n_substeps=15, horizon=80, deterministic_mode=False,
     env = ConcatenateObsWrapper(env, {'agent_qpos_qvel': ['agent_qpos_qvel', 'hider', 'prep_obs'],
                                       'box_obs': ['box_obs', 'you_lock', 'team_lock', 'obj_lock']})
     env = SelectKeysWrapper(env, keys_self=keys_self,
-                            keys_external=keys_external,
-                            keys_mask=keys_mask_self + keys_mask_external,
-                            flatten=False)
+                            keys_other=keys_external + keys_mask_self + keys_mask_external)
     return env
