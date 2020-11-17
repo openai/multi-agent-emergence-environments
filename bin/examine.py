@@ -38,8 +38,8 @@ def main(argv):
 
     env_name = names[0]
     core_dir = abspath(join(dirname(__file__), '..'))
-    envs_dir = 'mae_envs/envs',
-    xmls_dir = 'xmls',
+    envs_dir = 'mae_envs/envs'
+    xmls_dir = 'xmls'
 
     if len(names) == 1:  # examine the environment
         examine_env(env_name, kwargs,
