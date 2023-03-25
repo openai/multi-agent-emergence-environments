@@ -13,7 +13,7 @@ pip install -e multi-agent-emergence-environments/
 
 This repository has been tested only on Mac OS X and Ubuntu 16.04 with Python 3.6
 
-### Use
+### Usage
 
 Environment construction works in the following way: You start from the `Base` environment (defined in `mae_envs/envs/base.py`) and then you add environment modules (e.g. `Boxes`, `Ramps`, `RandomWalls`, etc.) and then wrappers on top. You can see examples in the `mae_envs/envs` folder.
 
